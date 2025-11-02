@@ -32,9 +32,9 @@ export const Footer = () => {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-gradient-primary rounded-md flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">CR</span>
+                <span className="text-primary-foreground font-bold">SY</span>
               </div>
-              <span className="text-xl font-semibold text-foreground">Co-Read</span>
+              <span className="text-xl font-semibold text-foreground">Synapse</span>
             </div>
             <p className="text-muted-foreground leading-relaxed max-w-md">
               AI-assisted radiology workflow assistant. Helping clinicians make better decisions with 
@@ -51,7 +51,7 @@ export const Footer = () => {
                 <Github className="h-5 w-5" />
               </a>
               <a
-                href="mailto:demo@co-read.app"
+                href="mailto:demo@synapse.app"
                 className="w-9 h-9 rounded-lg bg-muted hover:bg-primary/10 flex items-center justify-center transition-colors"
                 aria-label="Email"
               >
@@ -118,9 +118,9 @@ export const Footer = () => {
               <div className="space-y-2 text-sm">
                 <p className="font-semibold text-foreground">Important Medical Disclaimer</p>
                 <p className="text-muted-foreground leading-relaxed">
-                  <strong>Co-Read is a hackathon prototype</strong> intended for research and educational purposes only. 
-                  This is <strong>not a medical device</strong> and is <strong>not approved for primary diagnostic use</strong>. 
-                  All images shown are de-identified. Clinical decisions must be made by licensed healthcare professionals. 
+                  <strong>Synapse is a hackathon prototype</strong> intended for research and educational purposes only.
+                  This is <strong>not a medical device</strong> and is <strong>not approved for primary diagnostic use</strong>.
+                  All images shown are de-identified. Clinical decisions must be made by licensed healthcare professionals.
                   The developers assume no liability for clinical outcomes.
                 </p>
               </div>
@@ -130,7 +130,7 @@ export const Footer = () => {
 
         {/* Bottom */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground pt-8 border-t border-border">
-          <p>© {currentYear} Co-Read. Hackathon project. All rights reserved.</p>
+          <p>© {currentYear} Synapse. Hackathon project. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <a href="#" className="hover:text-foreground transition-colors flex items-center gap-1.5">
               <Lock className="h-4 w-4" />

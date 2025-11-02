@@ -46,9 +46,9 @@ export const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-primary rounded-md flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">CR</span>
+              <span className="text-primary-foreground font-bold text-sm">SY</span>
             </div>
-            <span className="text-lg font-semibold text-foreground">Co-Read</span>
+            <span className="text-lg font-semibold text-foreground">Synapse</span>
           </div>
 
           {/* Desktop Nav */}

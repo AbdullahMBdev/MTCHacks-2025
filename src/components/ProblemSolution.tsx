@@ -42,7 +42,7 @@ export const ProblemSolution = () => {
           <div className="space-y-8 animate-fade-in-up">
             <div>
               <span className="text-sm font-semibold text-success uppercase tracking-wider">Our Approach</span>
-              <h2 className="text-3xl font-bold text-foreground mt-2">How Co-Read Helps</h2>
+              <h2 className="text-3xl font-bold text-foreground mt-2">How Synapse Helps</h2>
             </div>
             <div className="space-y-6">
               {solutions.map((solution, idx) => (

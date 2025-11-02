@@ -66,7 +66,7 @@ export const Hero = () => {
                 </div>
                 <div className="flex-1 flex justify-center">
                   <div className="bg-background px-4 py-1 rounded text-xs text-muted-foreground">
-                    co-read.app/viewer
+                    synapse.app/viewer
                   </div>
                 </div>
               </div>

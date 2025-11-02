@@ -32,7 +32,7 @@ export const FAQ = () => {
           <span className="text-sm font-semibold text-primary uppercase tracking-wider">FAQ</span>
           <h2 className="text-4xl font-bold text-foreground mt-2 mb-4">Frequently Asked Questions</h2>
           <p className="text-lg text-muted-foreground">
-            Common questions about Co-Read's capabilities and usage.
+            Common questions about Synapse's capabilities and usage.
           </p>
         </div>
 
