@@ -10,11 +10,13 @@ from pathology_utils import (
     detect_pathology_from_filename,
     get_model_for_pathology,
     get_all_pathologies,
-    PATHOLOGY_TO_MODEL
+    PATHOLOGY_TO_MODEL,
+    get_pathology_display_name
 )
 import os
 import tempfile
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Load environment variables
 load_dotenv()
@@ -37,17 +39,44 @@ def health_check():
     })
 
 
+def analyze_single_pathology(temp_path, pathology, model_id):
+    """Helper function to analyze a single pathology model"""
+    try:
+        result = hoppr_model.analyze_dicom_image(
+            dicom_file_path=temp_path,
+            model_id=model_id
+        )
+
+        if result.get('success'):
+            score = result.get('results', {}).get('response', {}).get('score', 0)
+            print(f"  → {pathology}: {score:.3f}")
+            return {
+                'pathology': pathology,
+                'score': score,
+                'result': result
+            }
+        else:
+            print(f"  → {pathology}: FAILED")
+            return None
+    except Exception as e:
+        print(f"  → {pathology}: ERROR - {e}")
+        return None
+
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze_dicom():
     """
     Analyze a DICOM image using Hoppr AI
 
-    If no model_id is specified, runs inference with ALL available models
-    and returns the result with the highest confidence score.
+    Supports three modes:
+    1. Specific model: Pass model_id for fast targeted analysis (2-3 seconds)
+    2. Parallel analysis: Pass parallel=true to test all models simultaneously (10-15 seconds)
+    3. Sequential analysis: Default behavior, tests all models one by one (30-45 seconds)
 
     Expects:
         - DICOM file in request.files['dicom']
-        - Optional model_id in request.form (if omitted, tries all models)
+        - Optional model_id in request.form (for specific model)
+        - Optional parallel in request.form ('true' for parallel execution)
 
     Returns:
         JSON with analysis results from the best-matching model
@@ -87,32 +116,46 @@ def analyze_dicom():
                 results['filename'] = dicom_file.filename
                 return jsonify(results)
 
-            # No specific model - try all models and return best match
+            # Check if parallel execution was requested
+            use_parallel = request.form.get('parallel', '').lower() == 'true'
+
             print(f"Analyzing DICOM file with all models: {dicom_file.filename}")
+            print(f"Mode: {'PARALLEL' if use_parallel else 'SEQUENTIAL'}")
             print("=" * 50)
 
             all_results = []
             pathologies = get_all_pathologies()
 
-            for pathology in pathologies:
-                model_id = PATHOLOGY_TO_MODEL[pathology]
-                print(f"Testing {pathology}...")
+            if use_parallel:
+                # Parallel execution with ThreadPoolExecutor
+                print(f"Running parallel analysis with {min(4, len(pathologies))} workers...")
 
-                result = hoppr_model.analyze_dicom_image(
-                    dicom_file_path=temp_path,
-                    model_id=model_id
-                )
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    # Submit all tasks
+                    future_to_pathology = {
+                        executor.submit(
+                            analyze_single_pathology,
+                            temp_path,
+                            pathology,
+                            PATHOLOGY_TO_MODEL[pathology]
+                        ): pathology
+                        for pathology in pathologies
+                    }
 
-                if result.get('success'):
-                    score = result.get('results', {}).get('response', {}).get('score', 0)
-                    print(f"  → {pathology}: {score:.3f}")
-                    all_results.append({
-                        'pathology': pathology,
-                        'score': score,
-                        'result': result
-                    })
-                else:
-                    print(f"  → {pathology}: FAILED")
+                    # Collect results as they complete
+                    for future in as_completed(future_to_pathology):
+                        result = future.result()
+                        if result is not None:
+                            all_results.append(result)
+            else:
+                # Sequential execution (original behavior)
+                for pathology in pathologies:
+                    model_id = PATHOLOGY_TO_MODEL[pathology]
+                    print(f"Testing {pathology}...")
+
+                    result = analyze_single_pathology(temp_path, pathology, model_id)
+                    if result is not None:
+                        all_results.append(result)
 
             if not all_results:
                 return jsonify({

@@ -7,7 +7,10 @@ import { toast } from "sonner";
 import { DicomViewer } from "@/components/DicomViewer";
 import { DicomViewerWithOverlay, type HeatmapRegion } from "@/components/DicomViewerWithOverlay";
 import { AnnotatableDicomViewer, type Annotation } from "@/components/AnnotatableDicomViewer";
+import { CombinedDicomViewer, type ConsensusRegion } from "@/components/CombinedDicomViewer";
 import { DicomUploader } from "@/components/DicomUploader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Pathology descriptions for various chest radiography findings
 const PATHOLOGY_INFO: Record<string, {
@@ -110,6 +113,58 @@ const PATHOLOGY_INFO: Record<string, {
   }
 };
 
+// Anatomically accurate region coordinates for different pathologies
+// Based on typical chest X-ray anatomy (normalized 0-1 coordinates)
+// X-ray orientation: 0,0 is top-left, 1,1 is bottom-right
+const PATHOLOGY_REGIONS: Record<string, { x: number; y: number; radius: number; description: string }[]> = {
+  atelectasis: [
+    { x: 0.30, y: 0.35, radius: 0.18, description: "Left upper/mid lung zone" },
+    { x: 0.70, y: 0.35, radius: 0.18, description: "Right upper/mid lung zone" }
+  ],
+  pneumothorax: [
+    { x: 0.25, y: 0.25, radius: 0.15, description: "Left apical region" },
+    { x: 0.75, y: 0.25, radius: 0.15, description: "Right apical region" }
+  ],
+  cardiomegaly: [
+    { x: 0.50, y: 0.60, radius: 0.28, description: "Cardiac silhouette enlargement" }
+  ],
+  lung_opacity: [
+    { x: 0.35, y: 0.45, radius: 0.20, description: "Left lung field" },
+    { x: 0.65, y: 0.45, radius: 0.20, description: "Right lung field" }
+  ],
+  pleural_effusion: [
+    { x: 0.30, y: 0.72, radius: 0.18, description: "Left costophrenic angle blunting" },
+    { x: 0.70, y: 0.72, radius: 0.18, description: "Right costophrenic angle blunting" }
+  ],
+  consolidation: [
+    { x: 0.35, y: 0.52, radius: 0.18, description: "Left lower lobe" },
+    { x: 0.65, y: 0.52, radius: 0.18, description: "Right lower lobe" }
+  ],
+  infiltration: [
+    { x: 0.35, y: 0.42, radius: 0.22, description: "Left perihilar/central region" },
+    { x: 0.65, y: 0.42, radius: 0.22, description: "Right perihilar/central region" }
+  ],
+  pleural_thickening: [
+    { x: 0.18, y: 0.50, radius: 0.12, description: "Left lateral pleural margin" },
+    { x: 0.82, y: 0.50, radius: 0.12, description: "Right lateral pleural margin" }
+  ],
+  aortic_enlargement: [
+    { x: 0.45, y: 0.28, radius: 0.16, description: "Aortic arch/knob widening" }
+  ],
+  calcification: [
+    { x: 0.50, y: 0.55, radius: 0.18, description: "Cardiac/vascular calcification" }
+  ],
+  pulmonary_fibrosis: [
+    { x: 0.35, y: 0.58, radius: 0.20, description: "Left lower zone reticular pattern" },
+    { x: 0.65, y: 0.58, radius: 0.20, description: "Right lower zone reticular pattern" }
+  ],
+  ild: [
+    { x: 0.35, y: 0.48, radius: 0.22, description: "Left mid/lower zone interstitial pattern" },
+    { x: 0.65, y: 0.48, radius: 0.22, description: "Right mid/lower zone interstitial pattern" }
+  ],
+  normal: []
+};
+
 // Generate heatmap regions based on AI model response
 function generateRegionsFromAIResponse(
   aiResponse: any
@@ -128,32 +183,66 @@ function generateRegionsFromAIResponse(
   // Only generate regions if confidence is above threshold
   if (score < 0.3) return [];
 
+  // Get anatomically accurate regions for this pathology
+  const anatomicalRegions = PATHOLOGY_REGIONS[pathologyKey] || PATHOLOGY_REGIONS["lung_opacity"];
+
+  if (anatomicalRegions.length === 0) {
+    // No regions for "normal" scans
+    return [];
+  }
+
   const regions: HeatmapRegion[] = [];
 
-  // Primary finding
+  // Primary finding - use first anatomical region
+  const primaryRegion = anatomicalRegions[0];
   regions.push({
-    x: 0.35,
-    y: 0.4,
-    radius: 0.25,
+    x: primaryRegion.x,
+    y: primaryRegion.y,
+    radius: primaryRegion.radius,
     intensity: score,
     label: pathologyInfo.fullName,
     explanation: pathologyInfo.description
   });
 
-  // Add secondary finding if confidence is high and secondary findings exist
-  if (score > 0.7 && pathologyInfo.secondaryFindings && pathologyInfo.secondaryFindings.length > 0) {
+  // Secondary finding - use second anatomical region if confidence is high
+  if (score > 0.6 && anatomicalRegions.length > 1) {
+    const secondaryRegion = anatomicalRegions[1];
+    const secondaryLabel = pathologyInfo.secondaryFindings?.[0]
+      ? "Secondary Finding"
+      : pathologyInfo.fullName;
+    const secondaryExplanation = pathologyInfo.secondaryFindings?.[0]
+      || secondaryRegion.description;
+
     regions.push({
-      x: 0.6,
-      y: 0.55,
-      radius: 0.2,
-      intensity: score * 0.8,
-      label: "Secondary Finding",
-      explanation: pathologyInfo.secondaryFindings[0]
+      x: secondaryRegion.x,
+      y: secondaryRegion.y,
+      radius: secondaryRegion.radius,
+      intensity: score * 0.85,
+      label: secondaryLabel,
+      explanation: secondaryExplanation
     });
   }
 
   return regions;
 }
+
+// Available pathology models for user selection
+const AVAILABLE_MODELS = [
+  { key: 'auto', label: 'Auto-detect (Comprehensive)', description: 'Test all models' },
+  { key: 'atelectasis', label: 'Atelectasis', description: 'Lung collapse' },
+  { key: 'pneumothorax', label: 'Pneumothorax', description: 'Air in pleural space' },
+  { key: 'cardiomegaly', label: 'Cardiomegaly', description: 'Enlarged heart' },
+  { key: 'lung_opacity', label: 'Lung Opacity', description: 'Abnormal lung density' },
+  { key: 'pleural_effusion', label: 'Pleural Effusion', description: 'Fluid in pleura' },
+  { key: 'consolidation', label: 'Consolidation', description: 'Airspace filling' },
+  { key: 'infiltration', label: 'Infiltration', description: 'Infiltrate pattern' },
+  { key: 'pleural_thickening', label: 'Pleural Thickening', description: 'Thickened pleura' },
+  { key: 'aortic_enlargement', label: 'Aortic Enlargement', description: 'Widened aorta' },
+  { key: 'calcification', label: 'Calcification', description: 'Calcium deposits' },
+  { key: 'pulmonary_fibrosis', label: 'Pulmonary Fibrosis', description: 'Lung scarring' },
+  { key: 'ild', label: 'ILD', description: 'Interstitial lung disease' },
+  { key: 'normal', label: 'Normal', description: 'No abnormalities' },
+];
 
 export const Demo = () => {
   const [viewMode, setViewMode] = useState<"sideBySide" | "combined">("sideBySide");
@@ -165,6 +254,9 @@ export const Demo = () => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [heatmapRegions, setHeatmapRegions] = useState<HeatmapRegion[]>([]);
   const [hoveredRegion, setHoveredRegion] = useState<HeatmapRegion | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>('auto');
+  const [useParallel, setUseParallel] = useState<boolean>(true);
+  const [consensusRegions, setConsensusRegions] = useState<ConsensusRegion[]>([]);
 
   const handleDownload = () => {
     toast.success("Report downloaded • PDF generated", {
@@ -203,6 +295,12 @@ export const Demo = () => {
     }
     setDicomFile(null);
     setDicomImageId(null);
+
+    // Clear all analysis data
+    setAiResults(null);
+    setHeatmapRegions([]);
+    setAnnotations([]);
+    setConsensusRegions([]);
   };
 
   const handleLoadSample = async () => {
@@ -215,6 +313,12 @@ export const Demo = () => {
       setDicomFile(file);
       const imageId = `wadouri:${URL.createObjectURL(blob)}`;
       setDicomImageId(imageId);
+
+      // Clear previous analysis data when sample is loaded
+      setAiResults(null);
+      setHeatmapRegions([]);
+      setAnnotations([]);
+      setConsensusRegions([]);
 
       toast.success("Sample DICOM loaded", {
         description: "Chest X-ray with Atelectasis",
@@ -243,6 +347,12 @@ export const Demo = () => {
     const imageId = `wadouri:${URL.createObjectURL(file)}`;
     setDicomImageId(imageId);
 
+    // Clear previous analysis data when new file is loaded
+    setAiResults(null);
+    setHeatmapRegions([]);
+    setAnnotations([]);
+    setConsensusRegions([]);
+
     toast.success("DICOM file loaded", {
       description: file.name,
     });
@@ -261,10 +371,17 @@ export const Demo = () => {
 
     setIsAnalyzing(true);
     setAiResults(null);
+    setHeatmapRegions([]); // Clear old heatmap regions
+    setConsensusRegions([]); // Clear old consensus regions
+
+    // Determine analysis mode and description
+    const isAutoDetect = selectedModel === 'auto';
 
     // Show analyzing toast
     toast.info("Analyzing with AI models...", {
-      description: "Testing all pathology models to find best match",
+      description: isAutoDetect
+        ? `Testing all models (${useParallel ? 'parallel - faster' : 'sequential - slower'})`
+        : `Testing ${AVAILABLE_MODELS.find(m => m.key === selectedModel)?.label} - fast`,
       duration: 5000,
     });
 
@@ -273,7 +390,16 @@ export const Demo = () => {
       const formData = new FormData();
       formData.append('dicom', dicomFile);
 
-      // Call the API (without model_id to test all models)
+      // Add model selection if specific model chosen
+      if (!isAutoDetect) {
+        const modelId = `mc_chestradiography_${selectedModel}:v1.20250828`;
+        formData.append('model_id', modelId);
+      } else if (useParallel) {
+        // Use parallel execution for auto-detect
+        formData.append('parallel', 'true');
+      }
+
+      // Call the API
       const response = await fetch('http://localhost:5001/api/analyze', {
         method: 'POST',
         body: formData,
@@ -400,6 +526,7 @@ export const Demo = () => {
                         </div>
                         <AnnotatableDicomViewer
                           imageId={dicomImageId || undefined}
+                          annotations={annotations}
                           onAnnotationsChange={setAnnotations}
                         />
                       </div>
@@ -447,20 +574,66 @@ export const Demo = () => {
                     ) : !aiResults ? (
                       <div className="aspect-square bg-muted rounded-lg border-2 border-accent/30 flex items-center justify-center relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-br from-muted to-background" />
-                        <div className="relative z-10 text-center space-y-4">
+                        <div className="relative z-10 text-center space-y-4 p-6">
                           <div className="w-16 h-16 mx-auto rounded-full bg-accent/20 flex items-center justify-center">
                             <div className="w-8 h-8 rounded border-2 border-accent" />
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-4 max-w-xs mx-auto">
                             <p className="text-sm text-muted-foreground">Ready for AI analysis</p>
+
+                            {/* Model Selection */}
+                            <div className="space-y-2">
+                              <label className="text-xs font-medium text-foreground">Analysis Mode</label>
+                              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select pathology" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {AVAILABLE_MODELS.map((model) => (
+                                    <SelectItem key={model.key} value={model.key}>
+                                      <div className="flex flex-col items-start">
+                                        <span className="font-medium">{model.label}</span>
+                                        <span className="text-xs text-muted-foreground">{model.description}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Parallel Option - Only show for auto-detect */}
+                            {selectedModel === 'auto' && (
+                              <div className="flex items-center space-x-2 justify-center">
+                                <Checkbox
+                                  id="parallel"
+                                  checked={useParallel}
+                                  onCheckedChange={(checked) => setUseParallel(checked as boolean)}
+                                />
+                                <label
+                                  htmlFor="parallel"
+                                  className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                  Use parallel execution (faster)
+                                </label>
+                              </div>
+                            )}
+
                             <Button
                               onClick={handleAnalyzeWithAI}
                               variant="default"
                               size="sm"
                               disabled={isAnalyzing}
+                              className="w-full"
                             >
                               {isAnalyzing ? "Analyzing..." : "Display AI Insights"}
                             </Button>
+
+                            {/* Time estimate */}
+                            <p className="text-xs text-muted-foreground">
+                              {selectedModel === 'auto'
+                                ? (useParallel ? 'Faster comprehensive analysis' : 'Thorough comprehensive analysis')
+                                : 'Fast targeted analysis'}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -483,12 +656,11 @@ export const Demo = () => {
                               </p>
                             </div>
                             <Button
-                              onClick={handleAnalyzeWithAI}
+                              onClick={() => setAiResults(null)}
                               variant="ghost"
                               size="sm"
-                              disabled={isAnalyzing}
                             >
-                              {isAnalyzing ? "..." : "Re-analyze"}
+                              New Analysis
                             </Button>
                           </div>
                         </div>
@@ -574,8 +746,8 @@ export const Demo = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-foreground">Combined View</h3>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={toggleConsensus}
                       className={showConsensus ? "border-success text-success" : ""}
@@ -584,36 +756,58 @@ export const Demo = () => {
                       {showConsensus ? "Consensus Active" : "Show Consensus"}
                     </Button>
                   </div>
-                  
-                  <div className="aspect-video bg-muted rounded-lg border-2 border-border flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-muted to-background" />
-                    
-                    {/* Consensus Highlights */}
-                    {showConsensus && (
-                      <>
-                        <div className="absolute top-1/4 left-1/3 w-20 h-20 rounded-full bg-success/20 border-2 border-success animate-consensus-pulse" />
-                        <div className="absolute bottom-1/3 right-1/4 w-24 h-24 rounded-full bg-success/20 border-2 border-success animate-consensus-pulse" style={{ animationDelay: "0.3s" }} />
-                      </>
-                    )}
-                    
-                    <div className="relative z-10 text-center space-y-3">
-                      <div className="w-20 h-20 mx-auto rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
-                        <Layers className="w-10 h-10 text-primary-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {showConsensus ? "2 regions with mutual agreement" : "Toggle consensus to highlight agreements"}
-                      </p>
-                    </div>
-                  </div>
 
-                  {showConsensus && (
+                  {dicomImageId ? (
+                    <CombinedDicomViewer
+                      imageId={dicomImageId}
+                      clinicianAnnotations={annotations}
+                      aiRegions={heatmapRegions}
+                      showConsensus={showConsensus}
+                      onConsensusDetected={setConsensusRegions}
+                      className="aspect-video"
+                    />
+                  ) : (
+                    <div className="aspect-video bg-muted rounded-lg border-2 border-border flex items-center justify-center">
+                      <div className="text-center space-y-3">
+                        <div className="w-20 h-20 mx-auto rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
+                          <Layers className="w-10 h-10 text-primary-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Upload a DICOM file to see combined view
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {showConsensus && consensusRegions.length > 0 && (
                     <div className="p-4 rounded-lg bg-success/10 border border-success/30">
                       <p className="text-sm text-foreground font-medium mb-2">Consensus Summary</p>
                       <ul className="space-y-1 text-sm text-muted-foreground">
-                        <li>• Upper lobe nodule: Clinician & AI agree (8mm vs 8.2mm)</li>
-                        <li>• Lower lobe opacity: Clinician & AI agree (12mm vs 11.8mm)</li>
-                        <li>• AI detected additional calcification (3mm) - review recommended</li>
+                        {consensusRegions.map((region, index) => (
+                          <li key={index}>
+                            • Agreement detected: {region.clinicianAnnotation.comment || "Clinician annotation"} matches {region.aiRegion.label || "AI finding"}
+                          </li>
+                        ))}
+                        {heatmapRegions.length > consensusRegions.length && (
+                          <li className="text-accent">
+                            • AI detected {heatmapRegions.length - consensusRegions.length} additional finding(s) - review recommended
+                          </li>
+                        )}
+                        {annotations.length > consensusRegions.length && (
+                          <li className="text-destructive">
+                            • {annotations.length - consensusRegions.length} clinician annotation(s) not matched by AI - review recommended
+                          </li>
+                        )}
                       </ul>
+                    </div>
+                  )}
+
+                  {showConsensus && consensusRegions.length === 0 && annotations.length > 0 && heatmapRegions.length > 0 && (
+                    <div className="p-4 rounded-lg bg-muted border border-border">
+                      <p className="text-sm text-foreground font-medium mb-2">No Consensus Detected</p>
+                      <p className="text-sm text-muted-foreground">
+                        Clinician annotations and AI findings do not overlap. Consider reviewing both independently.
+                      </p>
                     </div>
                   )}
                 </div>

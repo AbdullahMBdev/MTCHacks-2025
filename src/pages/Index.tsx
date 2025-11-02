@@ -7,8 +7,6 @@ import { Safety } from "@/components/Safety";
 import { Integrations } from "@/components/Integrations";
 import { Demo } from "@/components/Demo";
 import { FAQ } from "@/components/FAQ";
-import { Contact } from "@/components/Contact";
-import { Footer } from "@/components/Footer";
 import { useEffect } from "react";
 
 const Index = () => {
@@ -28,8 +26,6 @@ const Index = () => {
       <Integrations />
       <Demo />
       <FAQ />
-      <Contact />
-      <Footer />
     </div>
   );
 };

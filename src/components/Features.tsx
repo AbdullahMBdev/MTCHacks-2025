@@ -1,4 +1,4 @@
-import { Columns2, Layers, CheckCircle2, Download, History, Shield } from "lucide-react";
+import { Columns2, Layers, CheckCircle2 } from "lucide-react";
 
 export const Features = () => {
   const features = [
@@ -16,21 +16,6 @@ export const Features = () => {
       icon: CheckCircle2,
       title: "Consensus Highlighting",
       description: "Automatically mark where AI and clinician align; disagreements are clearly outlined for review.",
-    },
-    {
-      icon: Download,
-      title: "Download & Send",
-      description: "Export secondary captures, DICOM SR, and PDF reports. Send securely to your PACS/RIS or inbox.",
-    },
-    {
-      icon: History,
-      title: "Audit Trail & Versioning",
-      description: "Track who changed what, when. Full version history for accountability and compliance.",
-    },
-    {
-      icon: Shield,
-      title: "Privacy by Design",
-      description: "Demo uses de-identified data. Production design includes transit encryption and minimal retention.",
     },
   ];
 

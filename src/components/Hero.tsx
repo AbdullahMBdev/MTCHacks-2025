@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Lock, Globe } from "lucide-react";
+import { Shield, Globe } from "lucide-react";
 import { Link } from "react-scroll";
 import heroImage from "@/assets/hero-medical-interface.jpg";
 
@@ -34,11 +34,6 @@ export const Hero = () => {
                   Try the Demo
                 </Button>
               </Link>
-              <Link to="contact" spy smooth offset={-80} duration={500}>
-                <Button size="lg" variant="outline" className="text-base">
-                  Request a Pilot
-                </Button>
-              </Link>
             </div>
 
             {/* Trust Badges */}
@@ -46,10 +41,6 @@ export const Hero = () => {
               <Badge variant="secondary" className="px-3 py-1.5 gap-2">
                 <Shield className="h-3.5 w-3.5" />
                 HIPAA Ready*
-              </Badge>
-              <Badge variant="secondary" className="px-3 py-1.5 gap-2">
-                <Lock className="h-3.5 w-3.5" />
-                SOC 2 in Progress*
               </Badge>
               <Badge variant="secondary" className="px-3 py-1.5 gap-2">
                 <Globe className="h-3.5 w-3.5" />

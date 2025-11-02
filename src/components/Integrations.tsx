@@ -9,24 +9,6 @@ export const Integrations = () => {
       description: "Powered by Hoppr for inference orchestration, routing requests to specialized AI models.",
       badges: ["Orchestration", "Model Management"],
     },
-    {
-      icon: Database,
-      title: "PACS/RIS Export",
-      description: "Generate DICOM SR, secondary captures, and send directly to your existing PACS or RIS system.",
-      badges: ["DICOM SR", "Secondary Capture"],
-    },
-    {
-      icon: Send,
-      title: "HL7 & FHIR",
-      description: "Export findings via HL7 messages. FHIR support planned for broader interoperability.",
-      badges: ["HL7", "FHIR (future)"],
-    },
-    {
-      icon: Webhook,
-      title: "Webhooks & REST",
-      description: "Simple REST callbacks and webhooks for custom integrations with your existing workflow tools.",
-      badges: ["REST API", "Webhooks"],
-    },
   ];
 
   return (
@@ -40,11 +22,11 @@ export const Integrations = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        <div className="flex justify-center max-w-5xl mx-auto">
           {integrations.map((integration, idx) => (
-            <div 
+            <div
               key={idx}
-              className="p-8 rounded-xl border border-border bg-card hover:shadow-elegant hover:border-accent/30 transition-all duration-300 animate-fade-in-up"
+              className="p-8 rounded-xl border border-border bg-card hover:shadow-elegant hover:border-accent/30 transition-all duration-300 animate-fade-in-up max-w-xl w-full"
               style={{ animationDelay: `${idx * 75}ms` }}
             >
               <div className="flex items-start gap-4 mb-4">
@@ -65,31 +47,6 @@ export const Integrations = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Code Example */}
-        <div className="mt-16 max-w-3xl mx-auto animate-fade-in">
-          <div className="bg-card border border-border rounded-xl overflow-hidden shadow-card">
-            <div className="bg-muted px-6 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">Example Webhook</span>
-              <Badge variant="outline" className="text-xs">JSON</Badge>
-            </div>
-            <div className="p-6">
-              <pre className="text-sm text-muted-foreground overflow-x-auto">
-                <code>{`POST /webhook/report
-{
-  "studyId": "DEMO-CT-001",
-  "export": {
-    "pdf": "https://…/report.pdf",
-    "dicomSr": "https://…/report.dcm"
-  },
-  "consensus": [
-    { "roiId": "lesion-3", "status": "agreed" }
-  ]
-}`}</code>
-              </pre>
-            </div>
-          </div>
         </div>
       </div>
     </section>

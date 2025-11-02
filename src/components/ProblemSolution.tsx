@@ -1,18 +1,16 @@
-import { Clock, Repeat, FileQuestion, FileOutput } from "lucide-react";
+import { Clock, Repeat, FileQuestion } from "lucide-react";
 
 export const ProblemSolution = () => {
   const problems = [
     { icon: Clock, title: "Time Pressure", description: "High volume caseloads leave little time for detailed analysis" },
     { icon: Repeat, title: "Repetitive Measurements", description: "Manual measurements and annotations are tedious and time-consuming" },
     { icon: FileQuestion, title: "Discordant Findings", description: "Difficult to track where AI and clinical judgment differ" },
-    { icon: FileOutput, title: "Reporting Friction", description: "Exporting findings to PACS/RIS is often cumbersome" },
   ];
 
   const solutions = [
     { title: "Assisted Triage", description: "AI pre-analyzes studies, letting you focus on critical cases" },
     { title: "Auto-Measurements", description: "Automatic region detection and measurement reduces manual work" },
     { title: "Consensus Highlighting", description: "See at a glance where AI and clinician agree" },
-    { title: "One-Click Export", description: "Generate DICOM SR, PDF reports, and send to your PACS instantly" },
   ];
 
   return (

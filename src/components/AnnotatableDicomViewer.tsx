@@ -24,12 +24,14 @@ export interface Annotation {
 interface AnnotatableDicomViewerProps {
   imageId?: string;
   className?: string;
+  annotations?: Annotation[];
   onAnnotationsChange?: (annotations: Annotation[]) => void;
 }
 
 export const AnnotatableDicomViewer = ({
   imageId,
   className = "",
+  annotations: externalAnnotations = [],
   onAnnotationsChange,
 }: AnnotatableDicomViewerProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
@@ -38,8 +40,10 @@ export const AnnotatableDicomViewer = ({
   const [error, setError] = useState<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Annotation state
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  // Use external annotations if provided, otherwise use internal state
+  const annotations = externalAnnotations;
+
+  // UI state
   const [drawingMode, setDrawingMode] = useState(false);
   const [showCommentDialog, setShowCommentDialog] = useState(false);
   const [pendingAnnotation, setPendingAnnotation] = useState<Annotation | null>(null);
@@ -184,7 +188,6 @@ export const AnnotatableDicomViewer = ({
     if (pendingAnnotation) {
       const newAnnotation = { ...pendingAnnotation, comment: commentText };
       const updatedAnnotations = [...annotations, newAnnotation];
-      setAnnotations(updatedAnnotations);
       onAnnotationsChange?.(updatedAnnotations);
       toast.success("Annotation added", {
         description: commentText ? `"${commentText.substring(0, 30)}..."` : "No comment",
@@ -194,12 +197,11 @@ export const AnnotatableDicomViewer = ({
     setShowCommentDialog(false);
     setCommentText("");
     setPendingAnnotation(null);
-    setDrawingMode(null);
+    setDrawingMode(false);
   };
 
   const handleDeleteAnnotation = (id: string) => {
     const updatedAnnotations = annotations.filter(a => a.id !== id);
-    setAnnotations(updatedAnnotations);
     onAnnotationsChange?.(updatedAnnotations);
     toast.success("Annotation deleted");
   };

@@ -23,22 +23,6 @@ export const FAQ = () => {
       question: "What is Consensus Highlighting?",
       answer: "Regions where both clinician and AI identify the same finding are subtly emphasized with a green glow. Mismatches or unique findings from either side are outlined separately for your review.",
     },
-    {
-      question: "How do exports work?",
-      answer: "You can generate a PDF summary, DICOM Structured Report (SR), and secondary capture images. Choose to Download locally or Send directly to a configured PACS/RIS endpoint or secure email.",
-    },
-    {
-      question: "What about privacy and PHI?",
-      answer: "Demo data is fully de-identified. Production design includes end-to-end encryption in transit, optional on-device masking, and minimal data retention policies aligned with HIPAA requirements.",
-    },
-    {
-      question: "How does the AI work?",
-      answer: "The system uses Hoppr API to orchestrate multiple specialized AI models. Each model provides confidence scores and rationale snippets. The platform does not train on your data without explicit consent.",
-    },
-    {
-      question: "Can I customize the AI models?",
-      answer: "In production deployments, you can configure which models are used for different study types, adjust confidence thresholds, and even integrate your own validated models through Hoppr's API.",
-    },
   ];
 
   return (
