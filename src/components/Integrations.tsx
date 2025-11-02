@@ -5,8 +5,8 @@ export const Integrations = () => {
   const integrations = [
     {
       icon: Server,
-      title: "Hoppr API",
-      description: "Powered by Hoppr for inference orchestration, routing requests to specialized AI models.",
+      title: "HOPPR API",
+      description: "Powered by HOPPR for inference orchestration, routing requests to specialized AI models.",
       badges: ["Orchestration", "Model Management"],
     },
   ];

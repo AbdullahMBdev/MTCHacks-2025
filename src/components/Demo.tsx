@@ -554,7 +554,7 @@ export const Demo = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-foreground">AI Findings</h3>
-                      <Badge className="bg-accent/10 text-accent hover:bg-accent/20">Hoppr AI</Badge>
+                      <Badge className="bg-accent/10 text-accent hover:bg-accent/20">HOPPR AI</Badge>
                     </div>
 
 {!dicomFile ? (
