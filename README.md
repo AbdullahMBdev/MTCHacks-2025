@@ -1,13 +1,13 @@
-# Co-Read Assist - AI-Powered Radiology Collaboration Platform
+# Synapse - AI-Assisted Radiology Workflow Assistant
 
-A collaborative radiology platform that integrates Hoppr AI for medical imaging analysis, allowing radiologists to annotate DICOM images and receive AI-powered insights.
+An AI-assisted radiology platform that integrates HOPPR AI for medical imaging analysis, enabling radiologists to annotate DICOM images side-by-side with AI findings and visualize consensus regions.
 
 ## Project Overview
 
 This project combines:
 - **Frontend**: React + TypeScript + Vite web application for DICOM viewing and annotation
-- **AI Backend**: Hoppr AI integration for chest radiography analysis
-- **Features**: Real-time annotation, AI insights, and collaborative review
+- **AI Backend**: Flask API server with HOPPR AI integration for chest radiography analysis
+- **Features**: Side-by-side comparison, consensus highlighting, combined overlay, and multi-model AI analysis
 
 ## Technologies Used
 
@@ -22,15 +22,18 @@ This project combines:
 
 ### Backend/AI
 - Python 3
-- Hoppr AI SDK (`hopprai`)
+- Flask (REST API server)
+- Flask-CORS
+- HOPPR AI SDK (`hopprai`)
 - DICOM image processing
+- Cornerstone.js (DICOM rendering)
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js & npm ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
 - Python 3.x
-- Hoppr AI API key
+- HOPPR AI API key ([get one from HOPPR](https://hoppr.ai))
 
 ### Installation
 
@@ -54,7 +57,7 @@ This project combines:
    # or: venv\Scripts\activate  # On Windows
 
    # Install Python dependencies
-   pip install hopprai python-dotenv
+   pip install hopprai python-dotenv flask flask-cors
    ```
 
 4. **Configure environment variables**
@@ -66,12 +69,18 @@ This project combines:
 
 ### Running the Application
 
-**Start the frontend development server:**
+**Start the backend API server (in one terminal):**
+```bash
+source venv/bin/activate
+python api_server.py
+```
+
+**Start the frontend development server (in another terminal):**
 ```bash
 npm run dev
 ```
 
-**Test the Hoppr AI integration:**
+**Test the HOPPR AI integration:**
 ```bash
 source venv/bin/activate
 python test_hoppr.py
@@ -81,27 +90,37 @@ python test_hoppr.py
 
 ```
 MTCHacks-2025/
-├── src/                    # React frontend source
-│   ├── components/         # UI components
-│   ├── pages/             # Page components
-│   ├── hooks/             # Custom React hooks
-│   └── lib/               # Utility functions
-├── public/                # Static assets
-├── hoppr_model.py         # Hoppr AI integration module
-├── test_hoppr.py          # AI model test script
-├── main.py               # Example Hoppr usage
-├── venv/                 # Python virtual environment
-└── .env                  # Environment variables (not in git)
+├── src/                        # React frontend source
+│   ├── components/             # UI components
+│   │   ├── Demo.tsx           # Main interactive demo
+│   │   ├── AnnotatableDicomViewer.tsx  # Annotation interface
+│   │   ├── CombinedDicomViewer.tsx     # Combined overlay view
+│   │   └── DicomViewerWithOverlay.tsx  # AI findings overlay
+│   ├── pages/                  # Page components
+│   ├── hooks/                  # Custom React hooks
+│   └── lib/                    # Utility functions
+├── public/                     # Static assets
+├── api_server.py              # Flask REST API server
+├── hoppr_model.py             # HOPPR AI integration module
+├── pathology_utils.py         # Pathology region mapping
+├── test_hoppr.py              # AI model test script
+├── main.py                    # Example HOPPR usage
+├── dicom_images/              # Sample DICOM files
+├── venv/                      # Python virtual environment
+└── .env                       # Environment variables (not in git)
 ```
 
 ## Key Features
 
-- **DICOM Image Viewing**: Display and interact with medical imaging files
-- **Annotation Tools**: Highlight and comment on specific regions
-- **AI Insights**: Get Hoppr AI analysis for chest radiography
-- **Collaborative Review**: Share findings and AI insights with team
+- **Side-by-Side Comparison**: View clinician annotations next to AI findings simultaneously
+- **Interactive Annotations**: Click to add annotations with custom comments on DICOM images
+- **Combined Overlay**: Merge both clinician and AI views with visual consensus highlighting
+- **Consensus Detection**: Automatically detect and highlight regions where AI and clinician agree (green glow)
+- **Multi-Model AI Analysis**: Analyze images across 13+ chest pathology models via HOPPR AI
+- **Anatomically Accurate Regions**: AI findings mapped to medically appropriate locations on X-rays
+- **Real-time Analysis**: Instant AI inference with visual feedback
 
-## Hoppr AI Integration
+## HOPPR AI Integration
 
 The `hoppr_model.py` module provides a simple interface:
 
@@ -119,6 +138,9 @@ if results["success"]:
     insights = results["results"]
     print(insights)
 ```
+
+### Supported Pathologies
+Atelectasis, Cardiomegaly, Pneumothorax, Lung Opacity, Pleural Effusion, Consolidation, Infiltration, Pleural Thickening, Aortic Enlargement, Calcification, Pulmonary Fibrosis, ILD, and Normal
 
 ## Development
 
@@ -145,7 +167,11 @@ python main.py
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `HOPPR_API_KEY` | Your Hoppr AI API key | Yes |
+| `HOPPR_API_KEY` | Your HOPPR AI API key | Yes |
+
+## Important Disclaimer
+
+**Synapse is a hackathon prototype** intended for research and educational purposes only. This is **not a medical device** and is **not approved for primary diagnostic use**. All images shown are de-identified. Clinical decisions must be made by licensed healthcare professionals. The developers assume no liability for clinical outcomes.
 
 ## Contributing
 
@@ -153,4 +179,4 @@ This project was built for MTCHacks 2025.
 
 ## License
 
-See LICENSE file for details.
+MIT License - See LICENSE file for details.
